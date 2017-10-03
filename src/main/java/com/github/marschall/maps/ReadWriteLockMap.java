@@ -5,6 +5,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,6 +87,7 @@ public final class ReadWriteLockMap<K, V> implements Map<K, V>, Serializable {
    * Access to the underlying read lock for modification during iteration.
    *
    * @return the underlying write lock.
+   * @see Iterator#remove()
    */
   public Lock writeLock() {
     return this.lock.writeLock();
@@ -193,7 +195,8 @@ public final class ReadWriteLockMap<K, V> implements Map<K, V>, Serializable {
   /**
    * {@inheritDoc}
    *
-   * <p>The caller is responsible for synchronization using {@link #readLock()}.</p>
+   * <p>The caller is responsible for synchronization using {@link #readLock()}
+   * or {@link #writeLock()}.</p>
    */
   @Override
   public Set<K> keySet() {
@@ -203,7 +206,8 @@ public final class ReadWriteLockMap<K, V> implements Map<K, V>, Serializable {
   /**
    * {@inheritDoc}
    *
-   * <p>The caller is responsible for synchronization using {@link #readLock()}.</p>
+   * <p>The caller is responsible for synchronization using {@link #readLock()}
+   * or {@link #writeLock()}.</p>
    */
   @Override
   public Collection<V> values() {
@@ -213,7 +217,8 @@ public final class ReadWriteLockMap<K, V> implements Map<K, V>, Serializable {
   /**
    * {@inheritDoc}
    *
-   * <p>The caller is responsible for synchronization using {@link #readLock()}.</p>
+   * <p>The caller is responsible for synchronization using {@link #readLock()}
+   * or {@link #writeLock()}.</p>
    */
   @Override
   public Set<Entry<K, V>> entrySet() {
