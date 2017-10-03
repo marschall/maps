@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,26 +21,73 @@ import java.util.function.Function;
  * <p>Unlike {@link java.util.Collections#synchronizedMap(Map)} allows
  * concurrent reads while using less memory than {@link ConcurrentHashMap}.</p>
  *
+ * <p>As this map just wraps another map it will have the characteristics
+ * of the wrapped map.</p>
+ *
+ * <p>Users have manually synchronize on this  map when iterating over
+ * any of its collection views:</p>
+ * <pre><code>
+ *  Map map = new ReadWriteLockMap();
+ *      ...
+ *  Set set = map.keySet();
+ *  ...
+ *  map.readLock().lock();
+ *  try {
+ *    for (Object each : map.keySet()) {
+ *      aMethod(each);
+ *    }
+ *  } finally {
+ *    map.readLock().unlock();
+ *  }
+ * </code></pre>
+ *
+ * <p>Failure to follow this advice may result in non-deterministic behavior.</p>
+ *
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
-public class ReadWriteLockMap<K, V> implements Map<K, V>, Serializable {
+public final class ReadWriteLockMap<K, V> implements Map<K, V>, Serializable {
 
-  // TODO safe publication
+  private static final long serialVersionUID = 1L;
 
   private final ReadWriteLock lock;
   private final Map<K, V> map;
 
+  /**
+   * Initialize this wrapper around an existing map.
+   *
+   * @param map the map to wrap
+   */
   public ReadWriteLockMap(Map<K, V> map) {
     this.map = map;
     this.lock = new ReentrantReadWriteLock();
   }
 
-  private Lock readLock() {
+  /**
+   * Initialize this wrapper around a {@link HashMap}.
+   */
+  public ReadWriteLockMap() {
+    this(new HashMap<>());
+  }
+
+  /**
+   * Access to the underlying read lock for protecting iteration.
+   *
+   * @return the underlying read lock.
+   * @see #keySet()
+   * @see #values()
+   * @see #entrySet()
+   */
+  public Lock readLock() {
     return this.lock.readLock();
   }
 
-  private Lock writeLock() {
+  /**
+   * Access to the underlying read lock for modification during iteration.
+   *
+   * @return the underlying write lock.
+   */
+  public Lock writeLock() {
     return this.lock.writeLock();
   }
 
@@ -142,22 +190,34 @@ public class ReadWriteLockMap<K, V> implements Map<K, V>, Serializable {
     }
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>The caller is responsible for synchronization using {@link #readLock()}.</p>
+   */
   @Override
   public Set<K> keySet() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.map.keySet();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>The caller is responsible for synchronization using {@link #readLock()}.</p>
+   */
   @Override
   public Collection<V> values() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.map.values();
   }
 
+  /**
+   * {@inheritDoc}
+   *
+   * <p>The caller is responsible for synchronization using {@link #readLock()}.</p>
+   */
   @Override
-  public Set<java.util.Map.Entry<K, V>> entrySet() {
-    // TODO Auto-generated method stub
-    return null;
+  public Set<Entry<K, V>> entrySet() {
+    return this.map.entrySet();
   }
 
   @Override
